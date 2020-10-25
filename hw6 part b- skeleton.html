@@ -1,0 +1,607 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title></title>
+    <script src="movies.js"></script>
+    <script src="posters.js"></script>
+    <script src="moviesUtils.js"></script>
+    <script src="utils.js"></script>
+    <link href="StyleSheet.css" rel="stylesheet" />
+    <link href="responsive.css" rel="stylesheet" />
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+
+    <!--Note that the background animation will not work without this extra js-->
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    <!--bootstrap links-->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"></script>
+
+    <!--end of bootstrap links-->
+
+    <script>
+        console.log(movies);
+
+        $(document).ready(function () {
+
+            $("#Start").click(f2);
+
+            $("#ContinueG").click(getLocal);
+
+            $("#help").click(getHelp);
+        }); // end of ready
+
+
+        function f1() {
+
+            for (var i = 0; i < obj.questions[obj.pickedQue].ans.length; i++) {
+                if (i == obj.questions[obj.pickedQue].right_ans)
+                    document.getElementById(i).style.background = "green"
+                else
+                    document.getElementById(i).style.background = "dimgray"
+
+            }
+
+            cheated = true; 
+            localStorage.setItem("cheated", JSON.stringify(cheated));
+            $("#cheat").hide();
+         
+            
+        }
+
+        function f2() {
+            play();  
+            $("#Start").hide();
+            $("#ContinueG").hide();
+            $("#trivia").hide();
+            document.getElementById("help").innerHTML = "(3) hints";
+
+            var audio = new Audio("loading.mp3");
+            $("#loadingImg").show();
+            $("#ph").hide();
+            $("#ph2").hide();
+            $("#ph3").hide();    
+            $("#cheat").hide();
+            $("#help").hide();
+            $("#fire").hide();
+            $("#wow").hide();
+            $("#scR").hide();
+            $("#lostL").hide();
+            $("#bonusLife").hide();
+            $("#goodJob").hide();
+            $("#star").hide();
+            audio.play();   
+          
+         
+            $("#loadingImg").fadeOut(2000, function () {
+                pickMovie();
+              
+                $("#ph").show();
+                $("#ph2").show();
+                $("#ph3").show();   
+                $("#progress").show();
+                $("#cheat").show();
+                $("#help").show();
+            })
+
+
+          
+        
+        }
+
+        function getHelp() {
+
+            hlp = []; 
+
+            dup_ans = obj.questions[obj.pickedQue].ans;
+            for (var i = 0; i < dup_ans.length; i++) {
+                if (i !== obj.questions[obj.pickedQue].right_ans) {
+                    hlp.push(i);
+                    }  
+            }
+
+            let faded = [];
+       
+            for (var i = 0; i < 2; i++) {  
+                hlp = hlp.filter(function (element) {
+                    return element !== undefined;
+                })
+                let rnd = Math.floor(Math.random() * hlp.length);
+                let x = hlp[rnd];
+                $("#" + x).fadeOut(1000);
+                faded.push(x);
+                delete hlp[rnd];
+            }
+
+            hintFaded = faded;
+
+            localStorage.setItem("hintFaded", JSON.stringify(hintFaded));
+
+            hintFaded = [];
+
+            if (hints > 0) {   
+                hints --;
+            }
+
+            localStorage.setItem("hints", JSON.stringify(hints));
+            //localStorage.setItem("obj.prV", JSON.stringify(obj.prV));
+
+            var audio = new Audio("usedHint.wav");
+
+            switch (hints) {
+                case 2:
+                    document.getElementById("help").innerHTML = "(2) hints";
+                    audio.play();
+                    $("#help").fadeOut(1000);
+                    break;
+                case 1:
+                    document.getElementById("help").innerHTML = "(1) hints";
+                    audio.play();
+                    $("#help").fadeOut(1000);
+                    break;
+                case 0:
+                    $("#help").hide();
+                    break;
+                default:
+                    console.log('only 3 hints allowed')
+            }
+
+        }
+
+        function play() {
+            
+            document.getElementById("progress").value = 0;
+            prV = document.getElementById("progress").value;
+
+            obj = {
+                GenresOfMovie :[],
+                CountriesOfMovie :[],
+                LanguageOfMovie :[],
+                DirectorOfMovie :[],
+                ActorsOfMovie :[],
+                questions :[],
+                level : 1,
+                num: 0,
+                dup_array :[],
+                str1 : "",
+                disqualification : 5, // פסילה
+                score: 0, // ניקוד
+                pickedQue: 0,
+                
+            }
+
+            cheated = false;
+            hints = 3;
+            hintFaded = [];
+            document.getElementById("help").innerHTML = "(" + hints + ") hints";
+            create();
+           
+        }
+
+        function intoLocal() {
+            localStorage.setItem("obj", JSON.stringify(obj));
+            localStorage.setItem("hints", JSON.stringify(hints));
+            localStorage.setItem("cheated", JSON.stringify(cheated));
+
+        }
+
+        function getLocal() {
+            if (localStorage.length == 0)
+                f2();
+            else {
+                $("#ContinueG").hide();
+                $("#Start").hide();
+                $("#trivia").hide();
+                $("#cheat").show();
+                $("#progress").show();
+
+                obj = JSON.parse(localStorage.getItem("obj"));
+
+                if (typeof (localStorage.getItem("hints")) !== 'undefined')
+                    hints = JSON.parse(localStorage.getItem("hints"));
+                else
+                    hints = 3;
+
+                document.getElementById("help").innerHTML = "(" + hints + ") hints";
+
+                if (hints > 0)
+                    $("#help").show();
+                
+
+                prV = JSON.parse(localStorage.getItem("prV"));
+                document.getElementById("progress").value = prV;
+                writeToDiv("ph", obj.str1, true);
+
+                if (typeof (localStorage.getItem("hintFaded")) !== 'undefined')
+                    hintFaded = JSON.parse(localStorage.getItem("hintFaded"));
+
+                cheated = JSON.parse(localStorage.getItem("cheated"));
+                
+                plyAns();
+            }
+        }
+
+        function pickMovie() {
+
+            if (hints > 0)
+                $("#help").show();
+          
+            $("#cheat").show();
+
+            hintFaded = [];
+
+            cheated = false;
+
+            localStorage.setItem("hintFaded", JSON.stringify(hintFaded));
+
+            chkNum();
+
+            obj.num++;
+
+            obj.questions = [{
+                que: "?לאיזה ז'אנר שייך הסרט",
+                ans: [],
+                right_ans: ""
+            },
+            {
+                que: "?מי הבמאי של הסרט",
+                ans: [],
+                right_ans: ""
+            },
+            {
+                que: "?מהי שפת הסרט",
+                ans: [],
+                right_ans: ""
+            },
+            {
+                que: "?באיזו מדינה יצא הסרט לאקרנים",
+                ans: [],
+                right_ans: ""
+            },
+            {
+                que: "?איזה שחקן שיחק בסרט",
+                ans: [],
+                right_ans: ""
+            }
+            ]
+
+            obj.str1 = "";
+            obj.str1 += "<h1 class='h1S lvl'>Level: " + obj.level + "</h1><p class='pS'>&#9617 &nbsp Score: " + obj.score + "&nbsp &#9617 &nbsp Lives: &#129505 x " + obj.disqualification + "&nbsp &#9617</p>";
+
+            let x = pickMovLev();
+
+            obj.str1 += "<h1 class='h1S'>" + movies[x].title + "</h1>" + "<img src = ' " + movies[x].poster_path + "' />";
+
+            obj.pickedQue = Math.floor(Math.random() * obj.questions.length);
+            pickedCat = chkQue(obj.pickedQue, x);
+
+            obj.str1 += "<h2 class='h2S'>" + obj.questions[obj.pickedQue].que + "</h2>";
+            writeToDiv("ph", obj.str1, true);
+
+            remove_cat(pickedCat, obj.dup_array);
+        }
+
+        function pickMovLev() {
+
+            area = Math.floor(movies.length / 3) - 1;
+            rnd = 0;
+            switch (obj.level) {
+                case 1:
+                    rnd = Math.floor(Math.random() * area);
+                    //שליש ראשון במערך הסרטים
+                    break;
+                case 2:
+                    rnd = Math.floor(Math.random() * area) + area;
+                    //שליש שני במערך הסרטים
+                    break;
+                case 3:
+                    rnd = Math.floor(Math.random() * area) + (2 * area);
+                    //שליש שלישי במערך הסרטים
+                    break;
+                default:
+                    console.log('error: level does not exist');
+            }
+            return rnd
+        }
+
+        function chkNum() {
+            ck = false;
+            if (obj.num == 5)
+                ck = true;
+
+            if (ck) {
+                obj.num = 0;
+                obj.level++;
+                levelUp();
+            }
+        }
+
+        function levelUp() {
+            $("#LevelUp").show();
+            $("#ph").hide();
+            $("#ph2").hide();
+            $("#ph3").hide();
+            $("#cheat").hide();
+            $("#progress").hide();
+            $("#help").hide();
+            $("#scR").hide();    
+            $("#lostL").hide();
+            $("#bonusLife").hide();
+            $("#LevelUp").fadeOut(2000, function () {
+                $("#getReady").show();
+                var audio = new Audio("getReady.wav");
+                audio.play();
+                $("#getReady").fadeOut(2000, function () {
+                    $("#ph").show();
+                    $("#ph2").show();
+                    $("#ph3").show();
+                    $("#cheat").show();
+                    $("#progress").show();
+                    if (hints > 0)
+                        $("#help").show();
+                })
+              
+            });
+         
+        }
+
+        function chkQue(ind, mov) {
+            switch (ind) {
+                case 0:
+                    res = movies[mov].genre.split(", ");
+                    obj.dup_array = obj.GenresOfMovie.slice();
+                    break;
+                case 1:
+                    res = movies[mov].director.split(", ");
+                    obj.dup_array = obj.DirectorOfMovie.slice();
+                    break;
+                case 2:
+                    res = movies[mov].language.split(", ");
+                    obj.dup_array = obj.LanguageOfMovie.slice();
+                    break;
+                case 3:
+                    res = movies[mov].country.split(", ");
+                    obj.dup_array = obj.CountriesOfMovie.slice();
+                    break;
+                case 4:
+                    res = movies[mov].actors.split(", ");
+                    obj.dup_array = obj.ActorsOfMovie.slice();
+                    break;
+                default:
+                    console.log('error: picked question not found');
+            }
+            return res
+        }
+
+        function create() {
+
+            for (var i = 0; i < movies.length; i++) {
+                checkCateg(movies[i].genre.split(", "), obj.GenresOfMovie);
+                checkCateg(movies[i].language.split(", "), obj.LanguageOfMovie);
+                checkCateg(movies[i].director.split(", "), obj.DirectorOfMovie);
+                checkCateg(movies[i].actors.split(", "), obj.ActorsOfMovie);
+                checkCateg(movies[i].country.split(", "), obj.CountriesOfMovie);
+
+            }
+
+        }
+
+
+        function checkCateg(arr1, arr2) {
+            for (var i = 0; i < arr1.length; i++) {
+                ck = true;
+                for (var j = 0; j < arr2.length; j++) {
+                    if (arr1[i] == arr2[j]) {
+                        ck = false;
+                        break;
+                    }
+                }
+                if (ck)
+                    arr2.push(arr1[i]);
+            }
+        }
+
+        function shuf(arr, x) {
+            indx = Math.floor(Math.random() * obj.questions[obj.pickedQue].ans.length+1);
+            arr.splice(indx, 0, x);
+            obj.questions[obj.pickedQue].right_ans = indx;
+
+ 
+        }
+
+
+        function remove_cat(arr1, arr2) {
+
+            ind = Math.floor(Math.random() * arr1.length);
+
+            rans = arr1[ind];
+
+            for (var i = 0; i < arr2.length; i++) {
+                for (var j = 0; j < arr1.length; j++) {
+                    if (arr2[i] == arr1[j]) {
+                        delete arr2[i];
+                        break;
+                    }
+                }
+
+            }
+
+            for (var i = 0; i < 3; i++) {
+                arr2 = arr2.filter(function (element) {
+                    return element !== undefined;
+                })
+                let x = Math.floor(Math.random() * arr2.length);
+                obj.questions[obj.pickedQue].ans[i] = arr2[x];
+                delete arr2[x];
+            }
+
+            shuf(obj.questions[obj.pickedQue].ans, rans);
+
+            plyAns();
+
+        }
+
+        function plyAns() {
+  
+            strS = "";
+            strF = "";
+            for (var i = 0; i < obj.questions[obj.pickedQue].ans.length; i++) {
+                if(i % 2 ==0 )
+                    strS += "<button class='myButton' id='" + i + "' onclick='chkScore(this);'>" + obj.questions[obj.pickedQue].ans[i] + "</button>"
+                else 
+                    strF += "<button class='myButton' id='" + i + "' onclick='chkScore(this);'>" + obj.questions[obj.pickedQue].ans[i] + "</button>"
+
+            }
+            writeToDiv("ph2", strS, true);
+
+            writeToDiv("ph3", strF, true);
+
+            if (hintFaded.length > 0)
+                getFaded();
+            if (cheated)
+                f1();
+
+            intoLocal();
+     
+
+        }
+
+        function getFaded() {
+            for (var i = 0; i < hintFaded.length; i++) {
+
+                $("#" + hintFaded[i]).hide();
+
+            }
+
+            $("#help").hide();
+
+        }
+
+        function chkScore(elm) {
+            if (elm.id == obj.questions[obj.pickedQue].right_ans) {
+                obj.score++;
+                var audio = new Audio("coin.wav");
+                $("#scR").css("display", "flex");
+                $("#scR").show();
+                audio.play();
+                $("#scR").fadeOut(1000);
+                if (obj.level == 3 && obj.num == 1) {
+                    var audio = new Audio("bonus.wav");
+                    $("#bonusLife").css("display", "flex");
+                    $("#bonusLife").show();
+                    audio.play();
+                    $("#bonusLife").fadeOut(1000);
+                    obj.disqualification++;
+                }
+
+            }
+            else {
+                obj.disqualification--;
+                var audio = new Audio("life.wav");
+                $("#lostL").css("display", "flex");
+                $("#lostL").show();
+                audio.play();
+                $("#lostL").fadeOut(1000);
+            }
+            if (obj.disqualification == 0 || (obj.level == 3 && obj.num == 5)) {
+                str = "";
+                if (obj.score < 5) {
+                    $("#star").show();
+                    str += "<h1 class='h1S'>Failure doesn't mean</h1><h1 class='h1S'> THE GAME IS OVER.</h1><h1 class='h1S'>It means TRY AGAIN</h1><h1 class='h1S'> with experience.</h1>";
+                    var audio = new Audio("win1.wav");
+                    audio.play();
+                }
+                else if (obj.score >= 5 && obj.score < 10) {
+                    $("#wow").show();
+                    str += "<h1 class='h1S'>You were getting CLOSER</h1><h1 class='h1S'>to the highest score</h1><h1 class='h1S'> in the game.</h1>";
+                    var audio = new Audio("win2.mp3");
+                    audio.play();
+                }
+                else if (obj.score >= 10 && obj.score < 15) {
+                    $("#goodJob").show();
+                    str += "<h1 class='h1S'>You were SO CLOSE</h1><h1 class='h1S'>to reach the highest score</h1><h1 class='h1S'> in the game.</h1>";
+                    var audio = new Audio("win3.wav");
+                    audio.play();
+                }
+                else {
+                    $("#fire").show();
+                    str += "<h1 class='h1S'>Congratulations!</h1><h1 class='h1S'>You've got</h1><h1 class='h1S'>THE HIGHEST SCORE</h1><h1 class='h1S'> in the game</h1>";
+                    var audio = new Audio("win4.mp3");
+                    audio.play();
+                }
+                writeToDiv("ph", str + "<h2 class='h2S f-red mt-20'> Your final score was " + obj.score + "</h2><button class='mt-20 special StartEnd' onclick='f2()'> Play Again </button>", true)
+                $("#cheat").hide();
+                $("#scR").hide();
+                $("#lostL").hide();
+                $("#help").hide();
+                $("#bonusLife").hide();
+                $("#progress").hide();
+                writeToDiv("ph2", "", true);
+                writeToDiv("ph3", "", true);
+                localStorage.clear();
+
+            }
+            else {
+                pickMovie();
+                progressChange();
+            }
+        }
+
+
+        function progressChange() {
+
+                /*additional code for comment*/
+
+            document.getElementById("progress").value ++;
+            prV = document.getElementById("progress").value;
+            localStorage.setItem("prV", JSON.stringify(prV));
+     
+    
+        }
+
+    </script>
+
+</head>
+<body onload="init()">
+    <div class="container">
+        <div class="row">
+            <div class="col-12"><img class="hide" id="star" src="KULY.gif" /></div>
+            <div class="col-12"><img class="hide" id="fire" src="giphy.gif" /></div>
+            <div class="col-12"><img class="hide" id="wow" src="6ed1f36309c1f1e34111bc2ff313ea93.gif" /></div>
+            <div class="col-12"><img class="hide" id="goodJob" src="goodJob.gif" /></div>
+            <div class="col-12"><img class="hide" id="LevelUp" src="levelUp.jpg" /></div>
+            <div class="col-12"><img class="hide" id="getReady" src="getReady.jpg" /></div>
+            <div class="col-12"><progress class="hide" id="progress" value="0" max="15" data-preset="bubble"></progress></div>
+            <div class="col-12"><img class="hide" id="scR" src="extraP1.png" /></div>
+            <div class="col-12"><img class="hide" id="lostL" src="lostL1.png" /></div>
+            <div class="col-12"><img class="hide" id="bonusLife" src="bonusLife.png" /></div>
+            <div class="col-12" id="ph"></div>
+            <div class="col-12" id="ph2"></div>
+            <div class="col-12" id="ph3"></div>
+            <div class="col-12 EndDiv">
+                <button class="CheatB hide" id="cheat" onclick="f1()">cheat</button>
+                <button class="CheatB hide" id="help">(3) hints</button>
+
+            </div>
+        </div>
+        <div class="row mt-95">
+            <div class="col-12">
+                <div class="startdiv mt-95">
+                    <div>
+                        <img id="trivia" src="YpJilaXXT8qJR6HQVKFM_ISM_Trivia.gif" />
+                    </div>
+                    <div>
+                        <img class="hide" id="loadingImg" src="loadingImg.gif" />
+                    </div>
+                    <button class="special" id="Start">Start New Game</button>
+                    <button class="special" id="ContinueG">Continue Game</button>
+                </div>
+           </div>
+        </div>
+    </div>
+
+</body>
+</html>
